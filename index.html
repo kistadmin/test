@@ -1,0 +1,402 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Typing Practice</title>
+<SCRIPT type="text/javascript" src="APIWrapper.js"></SCRIPT>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF8">
+<style type="text/css">
+.classInput{
+	color: #00358e;
+	background-color: #00358e;
+	border-color: #00358e;
+	border-width: 0px;
+}
+</style>
+</head>
+
+<SCRIPT TYPE="text/javascript" LANGUAGE="JavaScript1.2">
+//SCORM STUFF
+doLMSInitialize();
+
+//This is where the lines the student must type go and the title and extra instructions
+
+var instructions="Type the following lines and click Finished! when done.  <BR>Remember to use the TAB key.";
+
+var title="FJ";
+
+var lineTotal=10;
+var line =new Array(11);
+line[1]="fff jjj fff jjj fff jjj fff jjj";
+line[2]="fff jjj fff jjj fff jjj fff jjj";
+line[3]="ffjj ffjj ffjj ffjj ffjj ffjj ffjj";
+line[4]="ffjj ffjj ffjj ffjj ffjj ffjj ffjj";
+line[5]="ffj jjf ffj jjf ffj jjf ffj jjf";
+line[6]="ffj jjf ffj jjf ffj jjf ffj jjf";
+line[7]="fff jjj fff jjj fff jjj fff jjj";
+line[8]="ffjj ffjj ffjj ffjj ffjj ffjj ffjj";
+line[9]="ffj jjf ffj jjf ffj jjf ffj jjf";
+line[10]="fjfj jfjf fjfj jfjf fjfj jfjf";
+
+//GLOBAL VARIABLES DECLARATION
+
+//Set grafix mode modern or classic (modern is default)
+gMode="modern";
+
+//ADD TOTALS FOR LINES TO CALCULATE WPM
+var totalLength=0;
+
+//WHICH LINE IS THE USER WORKING ON
+currentLine=1;
+//Errors the typist has made
+errors=0;
+//Seconds / secondsFlag
+s=0;sFlag=0;
+//wpm
+wpm=0;
+//awpm = wpm-errors
+awpm=0;
+//minSpeed the minimum speed required to send a score
+minSpeed=10;
+
+//leftRight THIS IS USED FOR THE TEXT COLOR CHANGE SCRIPT
+leftRight=0;
+//finishedFlag=0;
+finishedFlag=0;
+//Minutes and Seconds
+m=0;s=0;sec=0;
+
+var isTypingPaused = false;
+
+//INITIALIZE ALL
+function initialize(){
+	totalLength=0;
+	currentLine=1;
+	finishedFlag=false;
+	s=0;sFlag=0;
+	errors=-1;
+	wpm=0;
+	awpm=0;
+	m=0;s=0;sec=0;
+	setTimeout("setBgColor('#00358e')", 50);
+	updateOutput();
+}
+
+//This is the interval function
+var c = window.setInterval('timer();', 1000);
+
+//CHANGE THE CURRENT LINE DISPLAY TO THE PROPER LINE
+//CLEAR INPUT AND GIVE IT FOCUS
+function updateOutput(){
+
+	colorAWPM();
+
+	document.getElementById("divWPM").innerHTML="<b>"+wpm+"</b>";
+	document.getElementById("divErrors").innerHTML="<b>"+errors+"</b>";
+
+	temp=line[currentLine];
+	tempLeft=temp.substr(0,1);
+	tempRight=temp.substr(1,temp.length);
+
+	if(gMode=="modern"){
+		temp="<FONT SIZE='+3' COLOR='#FFFF00'><B>"+tempLeft+"</B></FONT><FONT COLOR='#FFFFFF'>"+tempRight+"</FONT>";
+	}
+
+	if(gMode=="classic"){
+		temp="<FONT COLOR='#FFFFFF'>"+tempLeft+tempRight+"</FONT>";
+	}
+
+	document.getElementById("divLine").innerHTML="<BR>"+temp+"<BR>";
+
+	document.getElementById("divNumTotal").innerHTML="<b>"+currentLine+" / "+lineTotal+"</b>";
+	if(finishedFlag!=true){
+		document.main.txtInput.value="";
+		document.main.txtInput.focus();
+	}
+}
+
+function colorAWPM(){
+	//add Color coding for awpm
+	var sColor="#FFFFFF";
+	if(awpm<minSpeed*1.5){sColor="#FFFF00";}
+	if(awpm<minSpeed){sColor="#FF0000";}
+	if(awpm>minSpeed*1.5){sColor="#00FF40";}
+	if(awpm==0){sColor="#FFFFFF";}
+
+	document.getElementById("divAWPM").innerHTML="<FONT COLOR='"+sColor+"'><B>"+awpm+"<B></FONT>";
+}
+
+function updateTimer(){
+	m=s/60;
+	m=Math.floor(m);
+	sec=s-(m*60);
+	if (sec<10){sec="0"+sec;}
+	document.getElementById("divTime").innerHTML="<B>"+m+":"+sec+"</B>";
+}
+
+function updateWPM(){
+	totalLength+=line[currentLine].length;
+	wpm=totalLength/(s/60);
+	wpm=wpm/5;
+	wpm=Math.round(wpm);
+	awpm=wpm-errors;
+	document.getElementById("divWPM").innerHTML=wpm;
+
+	colorAWPM();
+
+	//Give a warning when too slow and restart
+
+	if(awpm<minSpeed){
+		var message="Your typing speed is too slow!  You need to start over!";
+		alert(message);
+	}
+}
+
+//THIS WILL VERIFY THAT THE STUDENT HAS TYPED THE CORRECT ANSWER
+function verifyTyping(lineNum){
+
+	document.main.txtInput.value=chop(document.main.txtInput.value);
+
+	if(line[lineNum]!=document.main.txtInput.value){
+		delay();
+		document.main.txtInput.value="";
+		document.main.txtInput.focus();
+	}else{
+		//ADD TO CORRECT AND WPM STUFF HERE
+		updateWPM();
+		currentLine++;
+		}
+	if(currentLine>lineTotal){
+		finished();
+	}else{
+		updateOutput();
+	}
+}
+
+function finished(){
+	sFlag=0;
+	finishedFlag=true;
+	words=totalLength/5;
+	words=Math.floor(words);
+	stats="Lines: "+lineTotal+" Words:"+words+" Time:"+m+":"+sec+" WPM:"+wpm+" Errors:"+errors+"<BR>";
+	stats+="<BR><BIG>You're Finished!</BIG>";
+	document.getElementById("divLine").innerHTML=stats;
+	document.getElementById("divNumTotal").innerHTML="Finished";
+	document.main.txtInput.value="";
+}
+
+function sendScore(){
+
+	if(finishedFlag){
+		//Check to see if typing is too high
+		//Due to error in program
+		if(awpm>100){
+			alert("Sorry, there was a problem with the program.  Please try again.");
+			finishedFlag=false;
+			initialize();
+		}
+	}
+
+	if(finishedFlag){
+		if(awpm<minSpeed){
+			alert("Your typing speed is too slow.  Please try again.");
+			finishedFlag=false;
+			initialize();
+		}
+	}
+	
+	if(finishedFlag){
+		sFlag=0;
+		errors=Math.floor(errors);
+		document.main.score.value=awpm;
+		//For Scorm
+		doLMSSetValue("cmi.core.score.raw", awpm);
+		doLMSCommit("");
+		alert("Score submitted! Click Try Again! to try again.");
+		doLMSFinish("");
+		}else{
+		alert("Sorry, you're not finished yet!");
+		document.main.txtInput.focus();
+		}
+}
+
+//This is the function that changes the color as you type!
+function verifyText(lineNum){
+	//This will add color to the key
+	//changeImage(1);
+
+	startTimer();
+	correctText=line[lineNum];
+	typedText=document.main.txtInput.value;
+
+	leftText=correctText.substring(0,typedText.length);
+	rightText=correctText.substring(typedText.length+1,correctText.length);
+
+	if(leftText==typedText){
+
+	//if gMode is classic
+
+	if(gMode=="classic"){
+		leftRight=typedText.length;
+
+		leftText=leftText.substring(0,typedText.length);
+		rightText=correctText.substring(typedText.length,correctText.length);
+		currentLetter=correctText.substring(typedText.length,typedText.length+1);
+
+		changedText="<BR><u><FONT COLOR='#000000'>"+leftText+"</FONT></u><FONT COLOR='#FFFFFF'>"+rightText+"</FONT><BR>";
+		document.getElementById("divLine").innerHTML=changedText;
+	}
+
+	//If gMode is Modern
+	if(gMode=="modern"){
+		leftRight=typedText.length;
+
+		leftText=leftText.substring(0,typedText.length);
+		currentLetter=correctText.substring(typedText.length,typedText.length+1);
+
+		changedText="<BR><FONT COLOR='#000000'>"+leftText+"</FONT><FONT SIZE='+3' COLOR='#FFFF00'><B>"+currentLetter+"</B></FONT><FONT COLOR='#FFFFFF'>"+rightText+"</FONT><BR>";
+		document.getElementById("divLine").innerHTML=changedText;
+	}
+
+	}else{
+
+	//if gMode is modern
+	if(gMode=="modern"){
+		leftText=correctText.substring(0,leftRight);
+		currentLetter=correctText.substring(leftRight,leftRight+1);
+		rightText=correctText.substring(leftRight+1,correctText.length);
+		changedText="<BR><FONT COLOR='#000000'>"+leftText+"</FONT><FONT SIZE='+3' COLOR='#FFFF00'><B>"+currentLetter+"</B></FONT><FONT COLOR='#FF0000'>"+rightText+"</FONT><BR>";
+
+		document.getElementById("divLine").innerHTML=changedText;
+		errors+=.5;
+		document.getElementById("divErrors").innerHTML=errors;
+	}
+
+	//ifgMode is classic
+	if(gMode=="classic"){
+		leftText=correctText.substring(0,leftRight);
+		rightText=correctText.substring(leftRight,correctText.length);
+		changedText="<BR><u><FONT COLOR='#000000'>"+leftText+"</FONT></u><FONT COLOR='#FF0000'>"+rightText+"</FONT><BR>";
+
+		document.getElementById("divLine").innerHTML=changedText;
+		errors+=.5;
+		document.getElementById("divErrors").innerHTML=errors;
+	}
+
+
+	}
+}
+
+//Provides a short delay to change BG color
+function delay(){
+	document.bgColor="#FF0000";
+	setTimeout("setBgColor('#00358e')", 250);
+}
+
+function setBgColor(col){
+	document.bgColor=col;
+	errors++;
+	updateOutput();
+}
+
+//This will start the timer
+function startTimer(){
+	if (sFlag==0){
+		s=0;sFlag=1;
+	}
+}
+
+//This is what happens when the timer activates
+function timer(){
+	if(sFlag==1 && isTypingPaused==false){s++;}
+	updateTimer();
+	document.main.txtInput.focus();
+}
+
+//If the student adds an extra space at the end...this will delete it!
+function chop(string){
+	len=string.length;
+	last=string.charAt(len-1);
+	if (last==" "){
+		string=string.substr(0,len-1);
+	}
+	return string;
+}
+
+function changeGraphics(){
+	if (gMode=="modern"){gMode="classic";
+	}else{
+	gMode="modern";
+	}
+
+	if(gMode=="modern"){document.main.btnGMode.value="Modern";}
+	if(gMode=="classic"){document.main.btnGMode.value="Classic";}
+	errors--;
+}
+
+function pauseTyping(){
+	isTypingPaused = true;
+	errors--;
+	alert("Click OK To Continue.");
+	isTypingPaused = false;
+
+	updateOutput();
+}
+
+</SCRIPT>
+<script language="JavaScript">
+document.onkeydown = function(e) {
+    e = e || window.event;
+    if (e.keyCode == 13) {
+        verifyTyping(currentLine);
+		return false;
+    }
+};
+</script>
+<body bgcolor="#00358e" text="#FFFFFF" link="#FF0000" vlink="#FFFF00" alink="#FFFF00" onLoad="initialize();">
+<FONT FACE="COURIER NEW" SIZE="+1">
+<form name="main" id="main">
+<INPUT TYPE="hidden" NAME="assignmentID" VALUE="{assignmentID}" ID="txtLessonID">
+<INPUT TYPE="hidden" NAME="score" VALUE="" ID="txtScore">
+<INPUT TYPE="hidden" NAME="maxq" VALUE="{minSpeed}" ID="txtMaxQ">
+<INPUT TYPE="hidden" NAME="command" VALUE="submitScore" ID="txtCommand">
+
+<table width="100%" border="1">
+  <tr height="30px">
+    <td width="13%"><strong># / Total</strong></td>
+    <td width="15%"><DIV ID="divNumTotal" align="center"></DIV></td>
+    <td width="72%" rowspan="2" height="30px"><SPAN onMouseDown="alert('No cutting and pasting!');"><DIV ID="divLine" align="center"></DIV></SPAN></td>
+  </tr>
+  <tr height="30px">
+    <td><strong>Time</strong></td>
+    <td><DIV ID="divTime" align="center">-:--</DIV></td>
+  </tr>
+  <tr height="30px">
+    <td><strong>WPM</strong></td>
+    <td><DIV ID="divWPM" align="center">0</DIV></td>
+    <td rowspan="3""><center><input type="text" class="classInput" name="txtInput" size="100" maxlength="200"  onKeyUp="verifyText(currentLine);" onBlur=""></center></td>
+  </tr>
+    <tr height="30px">
+      <td><strong>Errors</strong></td>
+      <td><DIV ID="divErrors" align="center">0</DIV></td>
+    </tr>
+    <tr height="30px">
+    <td><strong>AWPM</strong></td>
+    <td><DIV ID="divAWPM" align="center">0</DIV></td>
+  </tr>
+</table>
+
+<table width="100%" border="1">
+   <TR>
+   	<TD><CENTER><input type="button" name="Submit" value="Send Score" onClick="sendScore();"></CENTER></TD>
+   	<TD><CENTER><input type="button" name="btnGMode" value="Modern" onClick="changeGraphics();"></CENTER></TD>
+   	<TD><CENTER><input type="button" name="btnPause" value="Pause" onClick="pauseTyping();"></CENTER></TD>   	
+   	<TD><CENTER><input type="button" name="DoOver" value="Try Again!" onClick="initialize();"></CENTER></TD>
+   </TR>
+</TABLE>
+</FORM>
+</FONT>
+<small><small><small><font color="gray">Online Typing Tutor by C. Thompson</font></small></small></small>
+</CENTER>
+<span id="trace"></span>
+</body>
+</html>
